@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scrum Board — Metaverso</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --panel: #13161e;
+    --border: #1e2330;
+    --accent1: #00e5ff;
+    --accent2: #ff4d6d;
+    --accent3: #b8ff57;
+    --text: #e8eaf0;
+    --muted: #5a6070;
+    --card-bg: #181c27;
+    --card-hover: #1e2334;
+    --tag-todo: #1a2a3a;
+    --tag-todo-text: #00e5ff;
+    --tag-doing: #2a1a2a;
+    --tag-doing-text: #ff4d6d;
+    --tag-done: #1a2a1a;
+    --tag-done-text: #b8ff57;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: var(--accent1);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  h1 span { color: var(--accent1); }
+
+  .status-bar {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent3);
+    animation: pulse 2s infinite;
+    display: inline-block;
+    margin-right: 4px;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* BOARDS WRAPPER */
+  .boards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  /* BOARD */
+  .board {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 600px;
+  }
+
+  .board-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .board-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .board-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .board-tag.backlog { background: rgba(0,229,255,0.1); color: var(--accent1); border: 1px solid rgba(0,229,255,0.2); }
+  .board-tag.sprint { background: rgba(255,77,109,0.1); color: var(--accent2); border: 1px solid rgba(255,77,109,0.2); }
+
+  .board-title h2 {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+  }
+
+  .btn-add {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .btn-add:hover {
+    border-color: var(--accent1);
+    color: var(--accent1);
+  }
+
+  /* DIVIDER */
+  .board-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* COLUMNS (solo para sprint) */
+  .sprint-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    flex: 1;
+  }
+
+  .col {
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 400px;
+  }
+
+  .col-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  .col-label.todo { color: var(--tag-todo-text); }
+  .col-label.doing { color: var(--tag-doing-text); }
+  .col-label.done { color: var(--tag-done-text); }
+
+  .col-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+
+  /* BACKLOG LIST */
+  .backlog-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card:hover {
+    background: var(--card-hover);
+    border-color: rgba(0,229,255,0.2);
+    transform: translateY(-1px);
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .card-priority {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .priority-alta { background: rgba(255,77,109,0.15); color: var(--accent2); }
+  .priority-media { background: rgba(255,193,7,0.15); color: #ffc107; }
+  .priority-baja { background: rgba(184,255,87,0.15); color: var(--accent3); }
+
+  .card-points {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .card-actions {
+    position: absolute;
+    top: 8px; right: 8px;
+    display: none;
+    gap: 4px;
+  }
+
+  .card:hover .card-actions { display: flex; }
+
+  .btn-icon {
+    background: var(--border);
+    border: none;
+    color: var(--muted);
+    border-radius: 4px;
+    width: 22px; height: 22px;
+    cursor: pointer;
+    font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .btn-icon:hover { background: var(--accent2); color: white; }
+  .btn-icon.edit:hover { background: var(--accent1); color: var(--bg); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transform: translateY(10px);
+    transition: transform 0.2s;
+  }
+
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--accent1);
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .field input, .field textarea, .field select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: vertical;
+  }
+
+  .field input:focus, .field textarea:focus, .field select:focus {
+    border-color: var(--accent1);
+  }
+
+  .field select option { background: var(--panel); }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .btn-cancel {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-cancel:hover { border-color: var(--muted); color: var(--text); }
+
+  .btn-save {
+    background: var(--accent1);
+    border: none;
+    color: var(--bg);
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-save:hover { opacity: 0.85; }
+
+  /* SAVE STATUS */
+  .save-status {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .save-status.saving { color: #ffc107; }
+  .save-status.saved { color: var(--accent3); }
+  .save-status.error { color: var(--accent2); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    gap: 8px;
+    opacity: 0.5;
+  }
+
+  .empty-state span { font-size: 24px; }
+
+  /* COUNT BADGE */
+  .count-badge {
+    background: var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-left: 6px;
+  }
+
+  /* SPRINT CARD — more compact */
+  .col .card { padding: 10px; }
+  .col .card-title { font-size: 12px; margin-bottom: 6px; }
+
+  @media (max-width: 900px) {
+    .boards { grid-template-columns: 1fr; }
+    .sprint-columns { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">⬡</div>
+      <h1>Scrum <span>Metaverso</span></h1>
+    </div>
+    <div class="status-bar">
+      <span id="saveStatus" class="save-status">
+        <span class="status-dot"></span> listo
+      </span>
+    </div>
+  </header>
+
+  <div class="boards">
+
+    <!-- PRODUCT BACKLOG -->
+    <div class="board" id="boardBacklog">
+      <div class="board-header">
+        <div class="board-title">
+          <span class="board-tag backlog">Backlog</span>
+          <h2>Product Backlog <span class="count-badge" id="countBacklog">0</span></h2>
+        </div>
+        <button class="btn-add" onclick="openModal('backlog')">+ Historia</button>
+      </div>
+      <div class="board-divider"></div>
+      <div class="backlog-list" id="listBacklog"></div>
+    </div>
+
+    <!-- SPRINT PLANNING -->
+    <div class="board" id="boardSprint">
+      <div class="board-header">
+        <div class="board-title">
+          <span class="board-tag sprint">Sprint</span>
+          <h2>Sprint Planning <span class="count-badge" id="countSprint">0</span></h2>
+        </div>
+        <button class="btn-add" onclick="openModal('sprint')">+ Tarea</button>
+      </div>
+      <div class="board-divider"></div>
+      <div class="sprint-columns">
+        <div class="col">
+          <div class="col-label todo">Por hacer</div>
+          <div class="col-cards" id="colTodo"></div>
+        </div>
+        <div class="col">
+          <div class="col-label doing">En progreso</div>
+          <div class="col-cards" id="colDoing"></div>
+        </div>
+        <div class="col">
+          <div class="col-label done">Hecho</div>
+          <div class="col-cards" id="colDone"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">Nueva Historia</h3>
+    <div class="field">
+      <label>Título</label>
+      <input type="text" id="inputTitle" placeholder="Como usuario quiero...">
+    </div>
+    <div class="field">
+      <label>Descripción (opcional)</label>
+      <textarea id="inputDesc" rows="2" placeholder="Detalles adicionales..."></textarea>
+    </div>
+    <div class="field">
+      <label>Prioridad</label>
+      <select id="inputPriority">
+        <option value="alta">Alta</option>
+        <option value="media" selected>Media</option>
+        <option value="baja">Baja</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Story Points</label>
+      <input type="number" id="inputPoints" placeholder="ej: 3" min="1" max="100">
+    </div>
+    <div id="sprintStatusField" class="field" style="display:none">
+      <label>Estado</label>
+      <select id="inputStatus">
+        <option value="todo">Por hacer</option>
+        <option value="doing">En progreso</option>
+        <option value="done">Hecho</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveCard()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_KEY = '$2a$10$5dreJDHQ1hDb7gOoQyz3Kuj8DtYKxmO0RbYLqZ1PcIHxW3c2.lHAy';
+const BIN_ID_KEY = 'scrumboard_bin_id';
+let BIN_ID = localStorage.getItem(BIN_ID_KEY) || null;
+
+let data = { backlog: [], sprint: [] };
+let modalBoard = 'backlog';
+let editId = null;
+let saveTimer = null;
+
+// ── INIT ──────────────────────────────────────────────
+async function init() {
+  setStatus('cargando...', 'saving');
+  if (BIN_ID) {
+    await loadData();
+  } else {
+    await createBin();
+  }
+  render();
+  setStatus('listo', 'saved');
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('saveStatus');
+  el.className = 'save-status ' + (cls || '');
+  el.innerHTML = `<span class="status-dot"></span> ${msg}`;
+}
+
+// ── JSONBIN API ───────────────────────────────────────
+async function createBin() {
+  try {
+    const res = await fetch('https://api.jsonbin.io/v3/b', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': API_KEY,
+        'X-Bin-Name': 'ScrumBoard'
+      },
+      body: JSON.stringify(data)
+    });
+    const json = await res.json();
+    BIN_ID = json.metadata.id;
+    localStorage.setItem(BIN_ID_KEY, BIN_ID);
+  } catch(e) {
+    setStatus('error al crear bin', 'error');
+  }
+}
+
+async function loadData() {
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      headers: { 'X-Master-Key': API_KEY }
+    });
+    const json = await res.json();
+    data = json.record || { backlog: [], sprint: [] };
+    if (!data.backlog) data.backlog = [];
+    if (!data.sprint) data.sprint = [];
+  } catch(e) {
+    setStatus('error al cargar', 'error');
+    data = { backlog: [], sprint: [] };
+  }
+}
+
+async function saveData() {
+  setStatus('guardando...', 'saving');
+  try {
+    if (!BIN_ID) await createBin();
+    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': API_KEY
+      },
+      body: JSON.stringify(data)
+    });
+    setStatus('guardado ✓', 'saved');
+  } catch(e) {
+    setStatus('error al guardar', 'error');
+  }
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveData, 800);
+}
+
+// ── RENDER ────────────────────────────────────────────
+function render() {
+  renderBacklog();
+  renderSprint();
+}
+
+function renderBacklog() {
+  const list = document.getElementById('listBacklog');
+  const count = document.getElementById('countBacklog');
+  count.textContent = data.backlog.length;
+  if (!data.backlog.length) {
+    list.innerHTML = `<div class="empty-state"><span>📋</span>Sin historias aún</div>`;
+    return;
+  }
+  list.innerHTML = data.backlog.map(card => cardHTML(card, 'backlog')).join('');
+}
+
+function renderSprint() {
+  const todo = document.getElementById('colTodo');
+  const doing = document.getElementById('colDoing');
+  const done = document.getElementById('colDone');
+  const count = document.getElementById('countSprint');
+
+  const todos = data.sprint.filter(c => c.status === 'todo');
+  const doings = data.sprint.filter(c => c.status === 'doing');
+  const dones = data.sprint.filter(c => c.status === 'done');
+
+  count.textContent = data.sprint.length;
+
+  todo.innerHTML = todos.length ? todos.map(c => cardHTML(c, 'sprint')).join('') : `<div class="empty-state"><span>○</span>vacío</div>`;
+  doing.innerHTML = doings.length ? doings.map(c => cardHTML(c, 'sprint')).join('') : `<div class="empty-state"><span>○</span>vacío</div>`;
+  done.innerHTML = dones.length ? dones.map(c => cardHTML(c, 'sprint')).join('') : `<div class="empty-state"><span>○</span>vacío</div>`;
+}
+
+function cardHTML(card, board) {
+  return `
+    <div class="card" id="card-${card.id}">
+      <div class="card-actions">
+        <button class="btn-icon edit" onclick="editCard('${card.id}','${board}')">✎</button>
+        <button class="btn-icon" onclick="deleteCard('${card.id}','${board}')">✕</button>
+      </div>
+      <div class="card-title">${escHtml(card.title)}</div>
+      ${card.desc ? `<div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.4">${escHtml(card.desc)}</div>` : ''}
+      <div class="card-meta">
+        <span class="card-priority priority-${card.priority}">${card.priority}</span>
+        ${card.points ? `<span class="card-points">${card.points} pts</span>` : ''}
+      </div>
+    </div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── MODAL ─────────────────────────────────────────────
+function openModal(board, cardData) {
+  modalBoard = board;
+  editId = cardData ? cardData.id : null;
+  document.getElementById('modalTitle').textContent =
+    cardData ? 'Editar tarjeta' : (board === 'backlog' ? 'Nueva Historia' : 'Nueva Tarea');
+  document.getElementById('inputTitle').value = cardData ? cardData.title : '';
+  document.getElementById('inputDesc').value = cardData ? (cardData.desc || '') : '';
+  document.getElementById('inputPriority').value = cardData ? cardData.priority : 'media';
+  document.getElementById('inputPoints').value = cardData ? (cardData.points || '') : '';
+  document.getElementById('sprintStatusField').style.display = board === 'sprint' ? 'flex' : 'none';
+  if (board === 'sprint') document.getElementById('inputStatus').value = cardData ? cardData.status : 'todo';
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('inputTitle').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  editId = null;
+}
+
+function saveCard() {
+  const title = document.getElementById('inputTitle').value.trim();
+  if (!title) { document.getElementById('inputTitle').focus(); return; }
+
+  const card = {
+    id: editId || Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    title,
+    desc: document.getElementById('inputDesc').value.trim(),
+    priority: document.getElementById('inputPriority').value,
+    points: document.getElementById('inputPoints').value || null,
+    status: modalBoard === 'sprint' ? document.getElementById('inputStatus').value : undefined,
+    createdAt: Date.now()
+  };
+
+  const list = modalBoard === 'backlog' ? data.backlog : data.sprint;
+
+  if (editId) {
+    const idx = list.findIndex(c => c.id === editId);
+    if (idx > -1) list[idx] = card;
+  } else {
+    list.push(card);
+  }
+
+  closeModal();
+  render();
+  scheduleSave();
+}
+
+function deleteCard(id, board) {
+  const list = board === 'backlog' ? data.backlog : data.sprint;
+  const idx = list.findIndex(c => c.id === id);
+  if (idx > -1) list.splice(idx, 1);
+  render();
+  scheduleSave();
+}
+
+function editCard(id, board) {
+  const list = board === 'backlog' ? data.backlog : data.sprint;
+  const card = list.find(c => c.id === id);
+  if (card) openModal(board, card);
+}
+
+// Close modal on overlay click
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+init();
+</script>
+</body>
+</html>
